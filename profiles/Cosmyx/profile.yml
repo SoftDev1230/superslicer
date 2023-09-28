@@ -1,0 +1,520 @@
+version: 0.1.0
+
+brand:
+  name: Cosmyx
+  url: http://www.cosmyx3d.com/
+
+machines:
+
+  cosmyx_base:
+    name: Base Cosmyx printer
+    virtual: true
+    props:
+      general:
+        technology: FFF
+        volume:
+          shape: rectangular
+          origin:
+            x: 0
+            y: 0
+        steps:
+          z: 0.0025
+        thumbnails:
+          size:
+            small:
+              x: 16
+              y: 16
+            big:
+              x: 330
+              y: 186
+        advanced:
+          relative_extrusion: 1
+      limits:
+        estimation:
+          compensation: 110
+        feedrate:
+          z: 20
+          e: 30
+        acceleration:
+          x: 20000
+          y: 20000
+          e: 5000
+          extruding: 5000
+          retracting: 5000
+          travel: 20000
+        jerk:
+          x: 9
+          y: 9
+          z: 3
+      gcode:
+        start: |-
+          M104 S[first_layer_temperature] ; set extruder temp
+          M140 S[first_layer_bed_temperature] ; set bed temp
+          M190 S[first_layer_bed_temperature] ; wait for bed temp
+          M109 S[first_layer_temperature] ; wait for extruder temp
+          G1 Z5 F15000 ; lift
+          G1 X299 Y160 F4500 ; move to prime
+          G1 Z0.29 F4500 ; get ready to prime
+          G92 E0 ; reset extrusion distance
+          G1 Y150 E9.0 F600 ; prime nozzle
+          G1 Y110 E12.5 F600 ; prime nozzle
+          G1 Y80 F5000 ; quick wipe
+          ;; start_print ;;
+        end: |-
+          ;; end_print ;;
+        before_layer_change: |-
+          ;BEFORE_LAYER_CHANGE
+          G92 E0.0
+          ;[layer_z]
+        after_layer_change: |-
+          ;AFTER_LAYER_CHANGE
+          ;[layer_z]
+        color_change: |-
+          PAUSE
+        pause: |-
+          M600
+      firmware:
+        gcode_flavor: klipper
+        illegal_chars: '""'
+    children:
+
+      cosmyx_nova:
+        name: Base Nova printer
+        virtual: true
+        props:
+          general:
+            cover: machine/Nova/thumbnail.png
+            volume:
+              size:
+                x: 300
+                y: 200
+                z: 270
+              bed:
+                model: machine/Nova/bed.stl
+                texture: machine/Nova/bed_texture.svg
+        children:
+          cosmyx_nova_single_extruder:
+            name: Nova
+          # cosmyx_nova_dual_extruders:
+          #   name: Nova Dual
+
+      cosmyx_supernova:
+        name: Base SuperNova printer
+        virtual: true
+        props:
+          general:
+            cover: machine/SuperNova/thumbnail.png
+            volume:
+              size:
+                x: 300
+                y: 300
+                z: 600
+              bed:
+                model: machine/SuperNova/bed.stl
+                texture: machine/SuperNova/bed_texture.png
+        children:
+          cosmyx_nova_single_extruder:
+            name: SuperNova
+          # cosmyx_nova_dual_extruders:
+          #   name: SuperNova Dual
+
+      # cosmyx_nova-2:
+      #   name: Nova 2
+
+tools:
+
+  cosmyx_base:
+    name: Base Cosmyx tool
+    virtual: true
+    children:
+
+      cosmyx_nova_fff:
+        name: Nova Head
+        virtual: true
+        default:
+          material: cosmyx_pla_basic
+          process: cosmyx_standard
+        printers:
+          - cosmyx_nova
+          - cosmyx_supernova
+        props:
+          type: FFF
+          retraction:
+            length: 0.8
+            minimum_disabled: 4
+            lift_z:
+              distance: 0.2
+              below: 269
+            speed:
+              retract: 35
+              prime: 35
+            minimum_travel: 1
+            wipe:
+              enable: 1
+            on_layer_change: 1
+        children:
+
+          cosmyx_nova_fff_010:
+            virtual: true
+            props:
+              name: ''
+              diameter: 0.1
+            children:
+
+              cosmyx_nova_fff_010_brass:
+                name: 0.10mm Brass
+                props:
+                  material: brass
+
+          cosmyx_nova_fff_025:
+            virtual: true
+            props:
+              name: ''
+              diameter: 0.25
+              layer_height:
+                min: 0.05
+                max: 0.2
+              retraction:
+                lift_z:
+                  distance: 0.15
+            children:
+
+              cosmyx_nova_fff_025_brass:
+                name: 0.25mm Brass
+                props:
+                  material: brass
+
+          cosmyx_nova_fff_040:
+            virtual: true
+            props:
+              name: ''
+              diameter: 0.4
+              layer_height:
+                min: 0.05
+                max: 0.3
+            children:
+
+              cosmyx_nova_fff_040_brass:
+                name: 0.40mm Brass
+                props:
+                  material: brass
+
+              cosmyx_nova_fff_040_hardened:
+                name: 0.40mm Hardened
+                props:
+                  material: hardened
+
+          cosmyx_nova_fff_060:
+            virtual: true
+            props:
+              name: ''
+              diameter: 0.6
+            children:
+
+              cosmyx_nova_fff_060_brass:
+                name: 0.60mm Brass
+                props:
+                  material: brass
+
+          cosmyx_nova_fff_080:
+            virtual: true
+            props:
+              name: ''
+              diameter: 0.8
+            children:
+
+              cosmyx_nova_fff_080_brass:
+                name: 0.80mm Brass
+                props:
+                  material: brass
+
+
+materials:
+
+  cosmyx_base:
+    name: Base Cosmyx material
+    virtual: true
+    props:
+      cooling:
+        short_layer:
+          fan:
+            enable_under: 100
+          speed:
+            time_goal: 15
+            min: 15
+
+    children:
+
+      basic_pla:
+        name: Basic PLA
+        virtual: true
+        props:
+          filament:
+            type: PLA
+            properties:
+              density: 1.24
+            temperature:
+              extruder:
+                first_layer: 215
+                other_layers: 200
+              bed:
+                first_layer: 60
+                other_layers: 60
+            print_speed:
+              max_volumetric_speed: 15
+          cooling:
+            speed:
+              min: 100
+          
+        children:
+
+          capifil_pla:
+            name: Capifil PLA
+            props:
+              filament:
+                vendor: Capifil
+                cost: 27.82
+            # tool_overrides:
+            #   cosmyx_nova_fff_025:
+            #     max_volumetric_speed: 3
+            #   cosmyx_nova_fff_040:
+            #     max_volumetric_speed: 21
+
+      basic_petg:
+        name: Basic PETG
+        virtual: true
+        props:
+          filament:
+            type: PETG
+            properties:
+              density: 1.27
+            temperature:
+              extruder:
+                first_layer: 230
+                other_layers: 220
+              bed:
+                first_layer: 85
+                other_layers: 85
+            print_speed:
+              max_volumetric_speed: 10
+          cooling:
+            speed:
+              min: 30
+              max: 50
+
+        children:
+          
+          capifil_petg:
+            name: Capifil PETG
+            props:
+              filament:
+                vendor: Capifil
+                cost: 27.82
+            # tool_overrides:
+            #   cosmyx_nova_fff_025:
+            #     max_volumetric_speed: 3
+            #   cosmyx_nova_fff_040:
+            #     max_volumetric_speed: 21
+
+
+processes:
+
+  cosmyx_base:
+    name: Base Cosmyx process
+    virtual: true
+    props:
+
+      shell:
+        vertical:
+          perimeters: 2
+        horizontal:
+          fill: 1
+          top:
+            layers: 5
+            minimum_thickness: 0.7
+          bottom:
+            layers: 4
+            minimum_thickness: 0.5
+        quality:
+          single_perimeter:
+            width: 200
+          force_shell_thickness: 1
+          overlap:
+            external: 100
+            other: 0
+          thin_walls:
+            min_width: 50
+        overhangs:
+          threshold:
+            enable: 0
+          speed: 0
+        advanced:
+          seam:
+            position: aligned
+            angle_cost: 30
+            travel_cost: 20
+
+      slicing:
+        filtering:
+          resolution: 0.002
+          rounding: 0.005
+        modifiers:
+          xy_compensation:
+            global:
+              outer: 0.05
+            first_layer:
+              compensation: -0.2
+          vertical_holes:
+            xy_compensation: -0.05
+
+      infill:
+        general:
+          density: 0.13
+          pattern: gyroid
+          connection_length: 12
+          perimeter_anchor: 2.5
+        advanced:
+          solid_threshold_area: 0
+
+      skirt:
+        distance: 2
+        minimum_length: 4
+
+      support:
+        overhang_threshold: 55
+        z_offset:
+          type: plane
+          top: 0.27
+          bottom: 0.27
+        sheath: 0
+        pattern_spacing: 2
+        pattern_spacing_interface: 0.2
+
+      speed:
+        print:
+          default: 100
+          perimeters:
+            internal: 300
+            external: 110
+          infill:
+            solid: 250
+            sparse: 270
+            top: 200
+          support:
+            default: 50
+            interface: '80'
+          bridges: 30
+          gap_fill:
+            max: 40
+          thin_walls: 30
+          ironing: 15
+        travel:
+          xy: 480
+        modifiers:
+          first_layer:
+            min: 30
+            max_infill: 30
+          small_perimeter:
+            default: 10
+            max_length: 70
+        acceleration:
+          default: 10000
+          perimeter:
+            internal: 5000
+            external: 1000
+          infill:
+            solid: 5000
+            sparse: 5000
+            top: 2000
+          bridge:
+            default: 2000
+          travel:
+            default: 5000
+          first_layer:
+            max: 1000
+
+      width:
+        extrusion:
+          default:
+            spacing: 0.3771
+          first_layer:
+            width: 0.5
+          perimeter:
+            spacing: 0.4071
+          external_perimeter:
+            width: 0.42
+          infill:
+            spacing: 0.4071
+          solid_infill:
+            spacing: 0.3792
+          top_infill:
+            width: 0.42
+          support_material:
+            width: 0.35
+          skirt:
+            width: 0
+        overlap:
+          solid_fill: 95
+        flow:
+          ratio:
+            bridge: 95
+
+      multi_tool:
+        wipe_tower:
+          enable: 1
+          position:
+            x: 170
+            y: 125
+          brim_width: '150'
+          prime_all_printing: 0
+
+      output:
+        sequential:
+          extruder_clearance:
+            radius: 45
+        file:
+          filename: "{input_filename_base}_{layer_height}mm_{filament_type[0]}_{print_time}_{printer_vendor}_{printer_model}_{nozzle_diameter[0]}nozzle.gcode"
+
+    children:
+
+      cosmyx_draft:
+        name: Draft
+        props:
+          layer_heights:
+            - "0.28"
+          infill:
+            general:
+              pattern: grid
+
+      cosmyx_speed:
+        name: Speed
+        props:
+          layer_heights:
+            - "0.15"
+            - "0.20"
+          infill:
+            general:
+              pattern: grid
+
+      cosmyx_standard:
+        name: Quality
+        props:
+          layer_heights:
+            - "0.15"
+            - "0.20"
+          infill:
+            general:
+              pattern: gyroid
+
+      cosmyx_detail:
+        name: Detail
+        props:
+          layer_heights:
+            - "0.10"
+
+      cosmyx_ultradetail:
+        name: Ultradetail
+        props:
+          layer_heights:
+            - "0.05"
+            - "0.07"

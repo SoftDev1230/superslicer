@@ -1,1 +1,3 @@
-# superslicer
+# slicer-profile-generator
+
+./run.sh
